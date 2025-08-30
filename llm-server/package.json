@@ -1,0 +1,57 @@
+{
+  "name": "llm-server",
+  "version": "1.0.0",
+  "description": "Simple LLM completion server with clean architecture",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && tsc-alias && ts-add-js-extension --dir=dist",
+    "start": "node dist/server.js",
+    "dev": "tsx watch --tsconfig tsconfig.json src/server.ts",
+    "dev:build": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": [
+    "llm",
+    "openai",
+    "completion",
+    "api",
+    "clean-architecture"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "openai": "^5.12.1",
+    "ts-add-js-extension": "^1.6.6",
+    "tsc-alias": "^1.8.16",
+    "winston": "^3.17.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.1.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^2.1.0"
+  }
+}
