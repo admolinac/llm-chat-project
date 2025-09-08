@@ -91,7 +91,3 @@ POST [https://llm-bootcamp.cardor.dev/api/completion](https://llm-bootcamp.cardo
    ```
    http://localhost:3000
    ```
-
-
-👉 ¿Quieres que en el `README` también deje un **mapa de correspondencia de parámetros (ejemplo de UI → valor numérico final en el request)** para que quede clarísimo cómo pasa de select a número?
-```
