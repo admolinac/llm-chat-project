@@ -12,40 +12,63 @@ interface ChatResponse {
   message: string
 }
 
+interface MessageParams {
+  message: string;
+  temperature: number;
+  top_p?: number;
+  top_k?: number;
+  reasoning_effort?: string;
+}
+
 // Función para llamar al servidor de chat
-async function sendMessage(message: string): Promise<ChatResponse> {
-  // const response = await fetch('http://localhost:4000/api/completion', {
-  const response = await fetch('https://llm-bootcamp.cardor.dev/api/completion', {
+async function sendMessage(messageParams: MessageParams): Promise<ChatResponse> {
+  const { message } = messageParams;
+
+  const body: any = {
+    input: message,
+    params: {
+      temperature: messageParams.temperature,
+      reasoning_effort: Number(messageParams.reasoning_effort),
+    }
+  };
+
+  console.log("BODY: ", body)
+
+  if (messageParams.top_k !== undefined) {
+    body.params['top_k'] = messageParams.top_k;
+  } else if (messageParams.top_p !== undefined) {
+    body.params['top_p'] = messageParams.top_p;
+  }
+
+  const response = await fetch('http://localhost:4000/api/completion', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      input: message,
-      params: {
-        temperature: 1,
-        // top_p: "params.top_p",
-        // top_k: "params.top_k",
-        // reasoning_effort: "params.reasoning_effort",
-      }
-    }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
-    throw new Error('Error al enviar mensaje')
+    throw new Error('Error al enviar mensaje ❌');
   }
 
   const data = await response.json()
-  return { message: data.message || data.content || 'Sin respuesta' }
+  return { message: data.message || data.content || 'Sin respuesta ⚠️' }
 }
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Array<Message>>([])
   const [inputValue, setInputValue] = useState('')
-  const [temperature, setTemperature] = useState(1)
+
+  // New parameters state
+  const [temperature, setTemperature] = useState(1);
+  const [top_k, setTopK] = useState<number | undefined>(undefined);
+  const [top_p, setTopP] = useState<number | undefined>(undefined);
+  const [reasoning_effort, setReasoningEffort] = useState('3');
 
   const chatMutation = useMutation({
     mutationFn: sendMessage,
+
     onSuccess: (data) => {
       const botMessage: Message = {
         id: Date.now().toString() + '-bot',
@@ -55,6 +78,7 @@ export default function ChatInterface() {
       }
       setMessages((prev) => [...prev, botMessage])
     },
+
     onError: (error) => {
       const errorMessage: Message = {
         id: Date.now().toString() + '-error',
@@ -64,22 +88,32 @@ export default function ChatInterface() {
       }
       setMessages((prev) => [...prev, errorMessage])
     },
+
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim() || chatMutation.isPending) return
+
+    if (!inputValue.trim() || chatMutation.isPending) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
       isUser: true,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    chatMutation.mutate(inputValue)
-    setInputValue('')
+    setMessages((prev) => [...prev, userMessage]);
+
+    chatMutation.mutate({
+      message: inputValue,
+      temperature,
+      top_k,
+      top_p,
+      reasoning_effort,
+    });
+
+    setInputValue('');
   }
 
   const clearChat = () => {
@@ -177,9 +211,10 @@ export default function ChatInterface() {
         )}
       </div>
 
-      {/* Input Area */}
+      {/* Input + Param Area */}
       <div className="bg-white border-t border-gray-200 p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
+
           <input
             type="text"
             value={inputValue}
@@ -189,15 +224,67 @@ export default function ChatInterface() {
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
           />
 
-          <input
-            type="number"
-            min={0}
-            max={2}
-            step={0.1}
-            value={temperature}
-            onChange={(e) => setTemperature(parseFloat(e.target.value))}
-            className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex gap-2">
+            <label className="flex flex-col text-sm">
+              Temp
+              <input
+                type="number"
+                min={0}
+                max={2}
+                step={0.1}
+                value={temperature}
+                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                className="px-2 py-1 border rounded"
+              />
+            </label>
+
+            <label className="flex flex-col text-sm">
+              Top-k
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={top_k ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value) : undefined
+                  setTopK(val)
+                  setTopP(undefined) // desactivar top-p
+                }}
+                className="px-2 py-1 border rounded"
+              />
+            </label>
+
+            <label className="flex flex-col text-sm">
+              Top-p
+              <input
+                type="number"
+                min={0}
+                max={1}
+                step={0.1}
+                value={top_p ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseFloat(e.target.value) : undefined
+                  setTopP(val)
+                  setTopK(undefined) // desactivar top-k
+                }}
+                className="px-2 py-1 border rounded"
+              />
+            </label>
+
+            <label className="flex flex-col text-sm">
+              Reasoning
+              <select
+                value={reasoning_effort}
+                onChange={(e) => setReasoningEffort(e.target.value)}
+                className="px-2 py-1 border rounded"
+              >
+                <option value="1">Minimal</option>
+                <option value="2">Low</option>
+                <option value="3">Medium</option>
+                <option value="4">High</option>
+              </select>
+            </label>
+          </div>
 
           <button
             type="submit"
